@@ -1,21 +1,21 @@
-# SPA-VanillaJs
+# SPA-VanillaJs SPA приложение на основе web компонентов.
 
-# SPA приложение на основе web компонентов.
-
-# Как пользоваться
+## Как пользоваться
 
 npm install
+
 npm install -g json-server
 
-# Запуск локального REST API сервера
+## Запуск локального REST API сервера
 
 npm run server
 
-# Запуск приложения
+## Запуск приложения
 
 npm run start
 
-# Команды для сборки дев и прод версий
+## Команды для сборки дев и прод версий
 
 npm run build
+
 npm run ibuild-prod
