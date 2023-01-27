@@ -1,5 +1,5 @@
 import appConstants from '../common/constants'
-import { render } from '../router'
+import { goTo, render, routes } from '../router'
 
 class NavComponent extends HTMLElement {
     constructor(){
@@ -55,7 +55,13 @@ class NavComponent extends HTMLElement {
             if(e.key === 'Enter') {
                 e.preventDefault()
                 const text = e.target.value
-                console.log('search', text)
+                if(text){
+                    if(this.searchType === appConstants.search.types.post){
+                        //we have deal with search for posts
+                        const url = routes.PostsSearch.reverse({ query: text })
+                        goTo(url)
+                    }
+                }
             }
         })
 
