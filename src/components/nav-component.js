@@ -61,6 +61,11 @@ class NavComponent extends HTMLElement {
                         const url = routes.PostsSearch.reverse({ query: text })
                         goTo(url)
                     }
+                    if(this.searchType === appConstants.search.types.user){
+                        //we have deal with search for users
+                        const url = routes.UsersSearch.reverse({ query: text })
+                        goTo(url)
+                    }
                 }
             }
         })
