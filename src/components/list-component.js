@@ -5,6 +5,8 @@ import { getPost, setPost } from '../service/posts'
 import { getUser, setUser } from '../service/users'
 import { getPosts, getPostsByUser, getPostsSearch } from '../api/postsApi'
 import { getUsers, getUsersSearch } from '../api/usersApi'
+import { getCommentsByPost, getCommentsByUser, getCommentsSearch } from '../api/commentsApi'
+import { setComment } from '../service/comments'
 
 class ListComponent extends HTMLElement {
     constructor() {
@@ -32,11 +34,14 @@ class ListComponent extends HTMLElement {
             e.stopPropagation()
             if (this.page > 1) {
                 this.page = this.page - 1
-                if(this.typeList === appConstants.lists.types.post){
+                if (this.typeList === appConstants.lists.types.post) {
                     this.getPostsPage()
                 }
-                if(this.typeList === appConstants.lists.types.user){
+                if (this.typeList === appConstants.lists.types.user) {
                     this.getUsersPage()
+                }
+                if (this.typeList === appConstants.lists.types.comment) {
+                    this.getCommentsPage()
                 }
             }
         })
@@ -45,13 +50,16 @@ class ListComponent extends HTMLElement {
             e.stopPropagation()
             if (!this.lastPage) {
                 this.page = this.page + 1
-                if(this.typeList === appConstants.lists.types.post){
+                if (this.typeList === appConstants.lists.types.post) {
                     this.getPostsPage()
                 }
-                if(this.typeList === appConstants.lists.types.user){
+                if (this.typeList === appConstants.lists.types.user) {
                     this.getUsersPage()
                 }
-                
+                if (this.typeList === appConstants.lists.types.comment) {
+                    this.getCommentsPage()
+                }
+
             }
         })
         shadow.appendChild(pagination)
@@ -85,18 +93,11 @@ class ListComponent extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ['search', 'list-type']
+        return ['search']
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-        if (name === 'search') {
-            this.search = newValue
-            this.updateComponent()
-        }
-        if (name === 'sealist-typerch') {
-            this.typeList = newValue
-            this.updateComponent()
-        }
+        this.updateComponent()
     }
 
     updateComponent() {
@@ -116,19 +117,15 @@ class ListComponent extends HTMLElement {
         const title = shadow.querySelector('.list-title')
 
         if (this.typeList === appConstants.lists.types.post) {
-            title.textContent = 'All posts'
-
-            if (userId) {
-                title.textContent = "Users' posts"
-            }
-
             this.getPostsPage()
         }
         if (this.typeList === appConstants.lists.types.user) {
-            title.textContent = 'All users'
             this.getUsersPage()
         }
-        
+        if (this.typeList === appConstants.lists.types.comment) {
+            this.getCommentsPage()
+        }
+
     }
 
     getPostsPage() {
@@ -139,13 +136,22 @@ class ListComponent extends HTMLElement {
         pagination.setAttribute('page', this.page)
         pagination.setAttribute('last', this.lastPage)
 
-        wrapper.innerHTML = ''
+        const title = shadow.querySelector('.list-title')
+        title.textContent = 'All posts'
+
+        if (userId) {
+            title.textContent = "Users' posts"
+        }
 
         const apiCall = this.search ? getPostsSearch(this.search, this.page) :
             userId ? getPostsByUser(userId, this.page) : getPosts(this.page)
 
         apiCall.then(posts => {
+            
             this.lastPage = posts.length < 10
+            const count = posts.length
+            pagination.setAttribute('last', this.lastPage)
+            wrapper.innerHTML = ''
             posts.forEach(post => {
                 setPost(post)
                 const postElement = document.createElement('post-component')
@@ -155,6 +161,10 @@ class ListComponent extends HTMLElement {
                 }
                 wrapper.appendChild(postElement)
             });
+            if (count === 0 && this.page === 1) {
+                //no data
+                wrapper.innerHTML = '<h3>No posts yet</h3>'
+            }
         })
             .catch(error => console.log(error))
 
@@ -168,13 +178,16 @@ class ListComponent extends HTMLElement {
         pagination.setAttribute('page', this.page)
         pagination.setAttribute('last', this.lastPage)
 
-        wrapper.innerHTML = ''
+        const title = shadow.querySelector('.list-title')
+        title.textContent = 'All users'
 
         const apiCall = this.search ? getUsersSearch(this.search, this.page)
-             : getUsers(this.page)
+            : getUsers(this.page)
 
         apiCall.then(users => {
             this.lastPage = users.length < 10
+            pagination.setAttribute('last', this.lastPage)
+            wrapper.innerHTML = ''
             users.forEach(user => {
                 setUser(user)
                 const userElement = document.createElement('user-component')
@@ -186,6 +199,63 @@ class ListComponent extends HTMLElement {
             });
         })
             .catch(error => console.log(error))
+
+    }
+
+    getCommentsPage() {
+        const shadow = this.shadowRoot
+        const userId = this.getAttribute('user')
+        const postId = this.getAttribute('post')
+        const wrapper = shadow.querySelector('.list-block')
+        const pagination = shadow.querySelector('pagination-component')
+        const title = shadow.querySelector('.list-title')
+
+        title.textContent = 'All comments'
+        if (userId) {
+            title.textContent = "User's comments"
+        }
+        if (postId) {
+            title.textContent = "Post's comments"
+        }
+
+        pagination.setAttribute('page', this.page)
+        pagination.setAttribute('last', this.lastPage)
+
+
+        const apiCall = this.search ?
+            getCommentsSearch(this.search, this.page) :
+            (userId ?
+                getCommentsByUser(userId, this.page) :
+                (postId ?
+                    getCommentsByPost(postId, this.page) :
+                    null))
+
+        if (apiCall) {
+            apiCall.then(comments => {
+                const count = comments.length
+                this.lastPage = count < 10
+                pagination.setAttribute('last', this.lastPage)
+                wrapper.innerHTML = ''
+                comments.forEach(comment => {
+                    setComment(comment)
+                    const commentElement = document.createElement('comment-component')
+                    commentElement.setAttribute('id', comment.id)
+                    if (this.search) {
+                        commentElement.setAttribute('search', this.search)
+                    }
+                    if(userId){
+                        commentElement.setAttribute('post-btn', 'true')
+                    }
+                    wrapper.appendChild(commentElement)
+                });
+                if (count === 0 && this.page === 1) {
+                    //no data
+                    wrapper.innerHTML = '<h3>No comments yet</h3>'
+                }
+            })
+                .catch(error => console.log(error))
+        }
+
 
     }
 

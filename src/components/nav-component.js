@@ -2,17 +2,17 @@ import appConstants from '../common/constants'
 import { goTo, render, routes } from '../router'
 
 class NavComponent extends HTMLElement {
-    constructor(){
+    constructor() {
         super()
-        const shadow = this.attachShadow({mode: 'open'})
+        const shadow = this.attachShadow({ mode: 'open' })
         const wrapper = document.createElement('div')
         this.searchType = appConstants.search.types.post
 
         wrapper.setAttribute('class', 'main-menu')
         this.links = [
-            {href: appConstants.routes.index, name: 'Home', class: 'home-link'},
-            {href: appConstants.routes.posts, name: 'Posts', class: 'posts-link'},
-            {href: appConstants.routes.users, name: 'Users', class: 'users-link'},
+            { href: appConstants.routes.index, name: 'Home', class: 'home-link' },
+            { href: appConstants.routes.posts, name: 'Posts', class: 'posts-link' },
+            { href: appConstants.routes.users, name: 'Users', class: 'users-link' },
         ]
 
         const style = document.createElement('style')
@@ -52,16 +52,21 @@ class NavComponent extends HTMLElement {
         search.setAttribute('class', 'global-search')
         search.addEventListener('keyup', (e) => {
             e.stopPropagation()
-            if(e.key === 'Enter') {
+            if (e.key === 'Enter') {
                 e.preventDefault()
                 const text = e.target.value
-                if(text){
-                    if(this.searchType === appConstants.search.types.post){
+                if (text) {
+                    if(text.trim().length < 2){
+                        alert('Search string must contain at least 2 chars')
+                        return 
+                    }
+
+                    if (this.searchType === appConstants.search.types.post) {
                         //we have deal with search for posts
                         const url = routes.PostsSearch.reverse({ query: text })
                         goTo(url)
                     }
-                    if(this.searchType === appConstants.search.types.user){
+                    if (this.searchType === appConstants.search.types.user) {
                         //we have deal with search for users
                         const url = routes.UsersSearch.reverse({ query: text })
                         goTo(url)
@@ -79,43 +84,43 @@ class NavComponent extends HTMLElement {
         const input = shadow.querySelector('input')
         const search = this.getAttribute('search')
         input.value = search
-        if(this.searchType === appConstants.search.types.post){
+        if (this.searchType === appConstants.search.types.post) {
             input.setAttribute('placeholder', 'Search post...')
-        } else if(this.searchType === appConstants.search.types.user){
+        } else if (this.searchType === appConstants.search.types.user) {
             input.setAttribute('placeholder', 'Search user...')
         }
-        
+
     }
 
-    connectedCallback(){
+    connectedCallback() {
         const shadow = this.shadowRoot;
         const searchText = this.getAttribute('search')
         this.searchType = this.getAttribute('type') ? this.getAttribute('type') : appConstants.search.types.post
 
-        if(searchText){
+        if (searchText) {
             const input = shadow.querySelector('input')
             input.value = searchText
         }
 
-        const {pathname: path} = new URL(window.location.href)
+        const { pathname: path } = new URL(window.location.href)
         const link = this.links.find((l) => l.href === path)
 
-        if(link) {
+        if (link) {
             const linkElement = shadow.querySelector(`.${link.class}`)
             linkElement.setAttribute('selected', 'true')
         }
     }
 
-    
-    static get observedAttributes(){
+
+    static get observedAttributes() {
         return ['search', 'type']
     }
 
-    attributeChangedCallback(name, oldValue, newValue){
-        if(name === 'search'){
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'search') {
             this.updateSearch()
         }
-        if(name === 'type'){
+        if (name === 'type') {
             this.searchType = newValue
             this.updateSearch()
         }

@@ -1,5 +1,5 @@
 import appConstants from '../common/constants'
-import { goTo } from '../router'
+import { goTo, routes } from '../router'
 import { randomColor, invertColor, getUserInitials, highlightText } from '../common/utils'
 import { getPost } from '../service/posts'
 
@@ -79,8 +79,8 @@ class PostComponent extends HTMLElement {
         text.addEventListener('click', (e) => {
             e.stopPropagation()
             //goto post 
-            //const url = 
-            //goTo(url)
+            const url = routes.Post.reverse({post: id})
+            goTo(url)
         })
 
         const user = shadow.querySelector('.post-user')
@@ -94,8 +94,8 @@ class PostComponent extends HTMLElement {
         user.addEventListener('click', (e) => {
             e.stopPropagation()
             //goto user 
-            //const url = 
-            //goTo(url)
+            const url = routes.User.reverse({user: post.user.id})
+            goTo(url)
         })
 
     }
